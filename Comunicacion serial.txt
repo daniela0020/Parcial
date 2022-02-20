@@ -1,15 +1,13 @@
 //----- codigo para el arduino transmisor de información
 
 int serialSalida=3;
-int serialEntrada=4;
-char *list;
+
 String dato;
 
 void setup() 
 {
   	Serial.begin(9600);
     pinMode(serialSalida, OUTPUT);
-  	pinMode(serialEntrada, INPUT);
 
 }
 
@@ -19,7 +17,7 @@ void loop() {
     
     dato=Serial.read();
     sendSerial(binary(dato));
-    Serial.println();
+   
   }
   
   
@@ -29,8 +27,8 @@ void loop() {
 void sendSerial(String serialData){
  	 
   for(int i=0;i<serialData.length();i++){
+    
     int out=String(serialData.charAt(i)).toInt();
-    Serial.print(out);
     delay(1000);
     digitalWrite(serialSalida,out);
     
@@ -90,8 +88,7 @@ String intToBinary(int n){
     	break;
 	  }	
   return binary;
-}
-//codigo para arduino receptor
+}//codigo para arduino receptor
 
 int serialEntrada=4;
 
