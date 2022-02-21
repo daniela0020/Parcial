@@ -1,1 +1,108 @@
+//----- codigo para el arduino transmisor de información
 
+int serialSalida=3;
+
+String dato;
+
+void setup() 
+{
+  	Serial.begin(9600);
+    pinMode(serialSalida, OUTPUT);
+
+}
+
+void loop() {
+  
+  if(Serial.available()>0){
+    
+    dato=Serial.read();
+    sendSerial(binary(dato));
+   
+  }
+    
+}
+//--------------
+void sendSerial(String serialData){
+ 	 
+  for(int i=0;i<serialData.length();i++){
+    
+    int out=String(serialData.charAt(i)).toInt();
+    delay(1000);
+    digitalWrite(serialSalida,out);
+    
+  }
+}
+
+//----funcion que retorna el binario 8 bits del valor ascci del numero
+String binary(String dato)
+{
+  String res;
+  int n=0;
+  
+  for(int i=0;i<dato.length();i++){
+    
+    n=String(dato.charAt(i)).toInt();
+    res+=intToBinary(n);
+  
+  }
+  
+   return res;
+}
+
+//------------ funcion que convierte un int a string correspondiente a su binario
+
+String intToBinary(int n){
+  String binary;
+  switch(n){
+    case 0:
+    	binary="0000";
+    	break;
+    case 1:
+    	binary="0001";
+    	break;
+    case 2:
+    	binary="0010";
+    	break;
+    case 3:
+    	binary="0011";
+    	break;
+    case 4:
+    	binary="0100";
+    	break;
+    case 5:
+    	binary="0101";
+    	break;
+    case 6:
+    	binary="0110";
+    	break;
+    case 7:
+    	binary="0111";
+    	break;
+    case 8:
+    	binary="1000";
+    	break;
+    case 9:
+    	binary="1001";
+    	break;
+	  }	
+  return binary;
+}
+--------------------//codigo para arduino receptor
+
+int serialEntrada=4;
+
+
+void setup() 
+{
+  	Serial.begin(9600);
+  	pinMode(serialEntrada, INPUT);
+
+}
+
+void loop() {
+  
+	int entrada=digitalRead(serialEntrada);
+  	Serial.print(entrada);
+  	delay(1000);
+  
+}
