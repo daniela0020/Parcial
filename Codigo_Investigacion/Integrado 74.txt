@@ -1,0 +1,40 @@
+ // C++ code
+//
+int clkLatch =2;
+int clkShift =3;
+int inputData =4;
+int reset =5;
+void setup()
+{
+  pinMode(clkLatch, OUTPUT);
+  pinMode(clkShift, OUTPUT);
+  pinMode(inputData, OUTPUT);
+  pinMode(reset, OUTPUT);
+ 
+}
+
+void loop()
+{
+  
+    
+      digitalWrite(reset,1);
+      digitalWrite(inputData,1);
+	  desplazamiento();
+    
+ 		
+ 
+  
+  
+}
+void desplazamiento(){
+    
+    digitalWrite(clkShift,1);
+    delay(1000);
+  	digitalWrite(clkShift,0);
+  	delay(1000);
+    digitalWrite(clkLatch,1);
+    delay(1000);
+    digitalWrite(clkLatch,0);
+  	delay(1000);
+}
+
