@@ -19,9 +19,7 @@ void loop() {
     sendSerial(binary(dato));
    
   }
-  
-  
-  
+    
 }
 //--------------
 void sendSerial(String serialData){
@@ -88,7 +86,8 @@ String intToBinary(int n){
     	break;
 	  }	
   return binary;
-}//codigo para arduino receptor
+}
+--------------------//codigo para arduino receptor
 
 int serialEntrada=4;
 
