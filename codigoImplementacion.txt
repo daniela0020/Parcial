@@ -1,4 +1,168 @@
 //---------------------Arduino Transmisor-------------------
 
 
+int serialSalida=3;
+int relojOut =4;
+int relojShift=6;
+int relojLatch=5;
+String dato;
+
+void setup() 
+{
+  Serial.begin(9600);
+  for(int i=3;i<7;i++){
+    pinMode(i, OUTPUT);
+  }
+    
+
+}
+
+void loop() {
+  
+  if(Serial.available()>0){
+ 
+    dato=Serial.read();
+    sendSerial(binary(dato));
+  	    
+  }
+    
+}
+//--------------
+void relojEnvio(){
+    digitalWrite(relojOut,1);
+    delay(10);
+    digitalWrite(relojOut,0);
+}
+void relojIntegrado(){
+  digitalWrite(relojShift,1);
+  delay(50);
+  digitalWrite(relojShift,0);
+  delay(50);
+  digitalWrite(relojLatch,1);
+  delay(50);
+  digitalWrite(relojLatch,0);
+}
+void sendSerial(String serialData){
+ 	 
+  for(int i=0;i<serialData.length();i++){
+    
+    int out=String(serialData.charAt(i)).toInt();
+    Serial.print(out);
+    relojEnvio();
+    digitalWrite(serialSalida,out);
+    relojIntegrado();
+    
+  }
+  Serial.println();
+  digitalWrite(serialSalida,0);
+}
+
+//----funcion que retorna el binario 8 bits del valor ascci del numero
+String binary(String dato)
+{
+  String res;
+  int n=0;
+  
+  for(int i=0;i<dato.length();i++){
+    
+    n=String(dato.charAt(i)).toInt();
+    res+=intToBinary(n);
+  
+  }
+  
+   return res;
+}
+
+//------------ funcion que convierte un int a string correspondiente a su binario
+
+String intToBinary(int n){
+  String binary;
+  switch(n){
+    case 0:
+    	binary="0000";
+    	break;
+    case 1:
+    	binary="0001";
+    	break;
+    case 2:
+    	binary="0010";
+    	break;
+    case 3:
+    	binary="0011";
+    	break;
+    case 4:
+    	binary="0100";
+    	break;
+    case 5:
+    	binary="0101";
+    	break;
+    case 6:
+    	binary="0110";
+    	break;
+    case 7:
+    	binary="0111";
+    	break;
+    case 8:
+    	binary="1000";
+    	break;
+    case 9:
+    	binary="1001";
+    	break;
+	  }	
+  return binary;
+}
+
 //---------------------Arduino Receptor--------------------
+// C++ code
+//
+int relojInput= 10;
+int contador=0;
+//int bit0=9,bit1=8,bit2=7,bit3=6,bit4=5,bit5=4,bit6=3,bit7=2;
+String binarioRx;
+void setup()
+{
+  Serial.begin(9600);
+  for(int i=2;i<11;i++){
+    pinMode(i, INPUT);
+  }
+  
+}
+
+void loop()
+{
+  
+  if(digitalRead(relojInput)==1){
+    contador++;
+    delay(150);//el delay causado por reloj integrado y rejol sincronizacion
+  }
+  if(contador==8){
+     for(int i=2;i<=9;i++){
+      	int bit=digitalRead(i);
+        binarioRx+=intToString(bit);
+        	
+    }
+    Serial.println(binarioRx);
+    binarioRx="";
+    contador=0;
+  }
+    
+  /*	
+   if(digitalRead(relojInput)==1){
+    delay(800);
+    for(int i=9;i>1;i--){
+      int bit=digitalRead(i);
+      binarioRx+=intToString(bit);
+  	   Serial.print(binarioRx);
+      binarioRx="";
+    }
+    Serial.println();
+   
+  }*/
+  
+  
+}
+
+String intToString(int bit){
+  
+  return String(bit);
+}
