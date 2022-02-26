@@ -1,4 +1,5 @@
 //---------------------Arduino Transmisor-------------------
+// C++ code
 int serialSalida=3;
 int relojOut =4;
 int relojShift=6;
@@ -20,19 +21,19 @@ void loop() {
   if(Serial.available()>0){
  	
     dato=Serial.read();
-   
+
     sendSerial(binary(dato));
 
   }
     
 }
-//--------------
-void relojEnvio(){
+//-------------- funciones
+void relojEnvio(){//reloj sincronizacion arduinos
     digitalWrite(relojOut,1);
     delay(10);
     digitalWrite(relojOut,0);
 }
-void relojIntegrado(){
+void relojIntegrado(){//reloj de integrado 74hc595
   digitalWrite(relojShift,1);
   delay(50);
   digitalWrite(relojShift,0);
@@ -41,16 +42,22 @@ void relojIntegrado(){
   delay(50);
   digitalWrite(relojLatch,0);
 }
-void sendSerial(String serialData){
+void sendSerial(String serialData){//envio de serial
+  
   relojEnvio();	 
+  
   for(int i=0;i<serialData.length();i++){
+  
     int out=String(serialData.charAt(i)).toInt();
     Serial.print(out);//impresion pendiente por borrar
     digitalWrite(serialSalida,out);
+    
     relojIntegrado();
     
   }
+  
   Serial.println();
+  
   digitalWrite(serialSalida,0);
 }
 
@@ -58,12 +65,13 @@ void sendSerial(String serialData){
 String binary(String dato)
 {
   String res;
+  
   int n=0;
   
   for(int i=0;i<dato.length();i++){
     
     n=String(dato.charAt(i)).toInt();
- 
+    
     res+=intToBinary(n);
   
   }
@@ -112,11 +120,10 @@ String intToBinary(int n){
 
 //---------------------Arduino Receptor--------------------
 // C++ code
-//
 int relojInput= 10;
-int contador=0,contadorByte=0;
+int contador=0,contadorByte=0,index=0;
 String binarioTotal,binario,informacion;
-
+int * numerosGuardados = new int(0);
 void setup()
 {
 
@@ -137,64 +144,128 @@ void loop()
  
     delay(1205);//el delay causado por reloj integrado y rejol sincronizacion
         
-     for(int i=2;i<=9;i++){
+     for(int i=2;i<=9;i++){//lectura 8 bits 74hc595
     
        int bit=digitalRead(i);
        
        binario+=String(bit);
   		
      }
-    
+
     binarioTotal+=binario;
     
-    Serial.println(binarioTotal);
-    
-    if(byteToInt(binario)<0){
+    if(byteToInt(binario)<0){//identificador de coma o sepearador de numeros
        
-      binarioTotal.remove(binarioTotal.length()-8, 8);
-          	
-      contadorByte=contador;
+      binarioTotal.remove(binarioTotal.length()-8, 8);//eliminar binario de coma/separador
+     
+      contadorByte=contador;//se determina los digitos del numero
       
-      Serial.println(contadorByte);
-      
-      contador=0;
+      contador=0;binario="";
     }
-    
-    contador++;
-    
-    binario="";    
-         	
+    else{
+      
+      contador++;
+      
+       binario="";
+
+    }
+          	
   }
- 
+  //cuando el numero es de un solo digito
   if(contadorByte==1){
     
-    Serial.println(byteToInt(binarioTotal));
+    numerosGuardados[index]=byteToInt(binarioTotal);
     
     binarioTotal="";
     
     contadorByte=0;
     
+    impresionListaNumeros(numerosGuardados,index);
+    
+    index++;
+    
+    
+    
   }
+//cuando el numero es dos digitos
+  else if(contadorByte==2){
+    
+    if(twoDigits(binarioTotal)==73){//es clave?
+      
+      informacion=datoValido(numerosGuardados,index);
+      
+      binarioTotal="";
 
+      contadorByte=0;
+    }
+    else{
+    
+      numerosGuardados[index]= twoDigits(binarioTotal);
+
+      binarioTotal="";
+
+      contadorByte=0;
+      
+      impresionListaNumeros(numerosGuardados,index);
+
+      index++;
+
+      
+    }
+  }
+  //cuando el numero es tres digitos
   else if(contadorByte==3){
     
-    twoDigits(binarioTotal);
+    numerosGuardados[index]=threeDigits(binarioTotal);
     
     binarioTotal="";
     
     contadorByte=0;
-  }
-  else if(contadorByte==4){
     
-    threeDigits(binarioTotal);
+    impresionListaNumeros(numerosGuardados,index);
     
-    binarioTotal="";
-    
-    contadorByte=0;
+    index++;
+   
   }
    
 }
-void threeDigits(String binary){
+//---------funciones-----------------------
+int promedioDatos(int * listaNumeros,int index){
+ 
+  int promedio=0;
+  
+  for(int i=index-5;i<index;i++){
+    
+    promedio+=listaNumeros[i];
+    Serial.print(listaNumeros[i]);Serial.print("-");
+    
+  }
+  promedio/=5;
+  
+  Serial.println(promedio);
+  
+  return promedio;
+}
+String datoValido(int * listaNumero,int index){
+ 
+  String dato;
+  
+  dato=String(promedioDatos(listaNumero,index));
+  
+  return dato;
+ 
+}
+
+void impresionListaNumeros(int *lista,int index){
+  for(int i=0;i<index+1;i++){
+    Serial.print(lista[i]);
+ 	Serial.print(",");
+  }
+     Serial.println();
+}
+// pasa de binario a su correspondiente representacion de 
+// entero para un numero de dos digitos
+int threeDigits(String binary){
   
   String byte1,byte2,byte3;
   
@@ -221,10 +292,12 @@ void threeDigits(String binary){
   dataNumber=byteToInt(byte1)*100;
   dataNumber+=byteToInt(byte2)*10;
   dataNumber+=byteToInt(byte3);
-  Serial.println(dataNumber);
+  return dataNumber;
   
 }
-void twoDigits(String binary){
+// pasa de binario a su correspondiente representacion de 
+// entero para un numero de dos digitos
+int twoDigits(String binary){
   
   
   String byte1,byte2;
@@ -248,11 +321,14 @@ void twoDigits(String binary){
   
   dataNumber=byteToInt(byte1)*10;
   dataNumber+=byteToInt(byte2);
-  Serial.println(dataNumber);
-  
+  return dataNumber;
 }
 
-
+/*
+	funcion que separa la respresentacion binaria de 8 bits
+    de un numero, y despues usa funcion binaryToInt
+    para integrar el numero de un digito
+*/
 int byteToInt(String binary){
   
   String part1,part2;
@@ -278,6 +354,11 @@ int byteToInt(String binary){
   decAscii-=48;
   return decAscii;
 }
+/*
+	funcion que convierte la respresentacion binaria de 4 bits
+    de un numero, a su numero entero correspondiente
+*/
+
 int binaryToInt(String binary){
   
   int asciiDec;
