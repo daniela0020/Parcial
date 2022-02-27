@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+
+=======
 //----- codigo para el arduino transmisor de información
 
 int serialSalida=3;
@@ -106,3 +109,4 @@ void loop() {
   	delay(1000);
   
 }
+>>>>>>> main
