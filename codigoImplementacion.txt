@@ -123,7 +123,7 @@ String intToBinary(int n){
 int relojInput= 10;
 int contador=0,contadorByte=0,index=0;
 String binarioTotal,binario,informacion;
-int * numerosGuardados = new int(0);
+int numerosGuardados [100];
 void setup()
 {
 
@@ -142,7 +142,7 @@ void loop()
   
   if(digitalRead(relojInput)==1){
  
-    delay(1205);//el delay causado por reloj integrado y rejol sincronizacion
+    delay(1200);//el delay causado por reloj integrado y rejol sincronizacion
         
      for(int i=2;i<=9;i++){//lectura 8 bits 74hc595
     
@@ -192,11 +192,12 @@ void loop()
     
     if(twoDigits(binarioTotal)==73){//es clave?
       
-      informacion=datoValido(numerosGuardados,index);
+      informacion=datoValido(numerosGuardados,index);;
       
       binarioTotal="";
 
       contadorByte=0;
+      
     }
     else{
     
