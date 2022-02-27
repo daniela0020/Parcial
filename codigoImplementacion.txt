@@ -1,0 +1,399 @@
+//---------------------Arduino Transmisor-------------------
+// C++ code
+int serialSalida=3;
+int relojOut =4;
+int relojShift=6;
+int relojLatch=5;
+String dato;
+
+void setup() 
+{
+  Serial.begin(9600);
+  for(int i=3;i<7;i++){
+    pinMode(i, OUTPUT);
+  }
+    
+
+}
+
+void loop() {
+  
+  if(Serial.available()>0){
+ 	
+    dato=Serial.read();
+
+    sendSerial(binary(dato));
+
+  }
+    
+}
+//-------------- funciones
+void relojEnvio(){//reloj sincronizacion arduinos
+    digitalWrite(relojOut,1);
+    delay(10);
+    digitalWrite(relojOut,0);
+}
+void relojIntegrado(){//reloj de integrado 74hc595
+  digitalWrite(relojShift,1);
+  delay(50);
+  digitalWrite(relojShift,0);
+  delay(50);
+  digitalWrite(relojLatch,1);
+  delay(50);
+  digitalWrite(relojLatch,0);
+}
+void sendSerial(String serialData){//envio de serial
+  
+  relojEnvio();	 
+  
+  for(int i=0;i<serialData.length();i++){
+  
+    int out=String(serialData.charAt(i)).toInt();
+    Serial.print(out);//impresion pendiente por borrar
+    digitalWrite(serialSalida,out);
+    
+    relojIntegrado();
+    
+  }
+  
+  Serial.println();
+  
+  digitalWrite(serialSalida,0);
+}
+
+//----funcion que retorna el binario 8 bits del valor ascci del numero
+String binary(String dato)
+{
+  String res;
+  
+  int n=0;
+  
+  for(int i=0;i<dato.length();i++){
+    
+    n=String(dato.charAt(i)).toInt();
+    
+    res+=intToBinary(n);
+  
+  }
+  
+   return res;
+}
+
+//------------ funcion que convierte un int a string correspondiente a su binario
+
+String intToBinary(int n){
+  String binary;
+  switch(n){
+    case 0:
+    	binary="0000";
+    	break;
+    case 1:
+    	binary="0001";
+    	break;
+    case 2:
+    	binary="0010";
+    	break;
+    case 3:
+    	binary="0011";
+    	break;
+    case 4:
+    	binary="0100";
+    	break;
+    case 5:
+    	binary="0101";
+    	break;
+    case 6:
+    	binary="0110";
+    	break;
+    case 7:
+    	binary="0111";
+    	break;
+    case 8:
+    	binary="1000";
+    	break;
+    case 9:
+    	binary="1001";
+    	break;
+	  }	
+  return binary;
+}
+
+//---------------------Arduino Receptor--------------------
+// C++ code
+int relojInput= 10;
+int contador=0,contadorByte=0,index=0;
+String binarioTotal,binario,informacion;
+int numerosGuardados [100];
+void setup()
+{
+
+  Serial.begin(9600);
+  
+  for(int i=2;i<11;i++){
+  
+    pinMode(i, INPUT);
+  
+  }
+   
+}
+
+void loop()
+{
+  
+  if(digitalRead(relojInput)==1){
+ 
+    delay(1200);//el delay causado por reloj integrado y rejol sincronizacion
+        
+     for(int i=2;i<=9;i++){//lectura 8 bits 74hc595
+    
+       int bit=digitalRead(i);
+       
+       binario+=String(bit);
+  		
+     }
+
+    binarioTotal+=binario;
+    
+    if(byteToInt(binario)<0){//identificador de coma o sepearador de numeros
+       
+      binarioTotal.remove(binarioTotal.length()-8, 8);//eliminar binario de coma/separador
+     
+      contadorByte=contador;//se determina los digitos del numero
+      
+      contador=0;binario="";
+    }
+    else{
+      
+      contador++;
+      
+       binario="";
+
+    }
+          	
+  }
+  //cuando el numero es de un solo digito
+  if(contadorByte==1){
+    
+    numerosGuardados[index]=byteToInt(binarioTotal);
+    
+    binarioTotal="";
+    
+    contadorByte=0;
+    
+    impresionListaNumeros(numerosGuardados,index);
+    
+    index++;
+    
+    
+    
+  }
+//cuando el numero es dos digitos
+  else if(contadorByte==2){
+    
+    if(twoDigits(binarioTotal)==73){//es clave?
+      
+      informacion=datoValido(numerosGuardados,index);;
+      
+      binarioTotal="";
+
+      contadorByte=0;
+      
+    }
+    else{
+    
+      numerosGuardados[index]= twoDigits(binarioTotal);
+
+      binarioTotal="";
+
+      contadorByte=0;
+      
+      impresionListaNumeros(numerosGuardados,index);
+
+      index++;
+
+      
+    }
+  }
+  //cuando el numero es tres digitos
+  else if(contadorByte==3){
+    
+    numerosGuardados[index]=threeDigits(binarioTotal);
+    
+    binarioTotal="";
+    
+    contadorByte=0;
+    
+    impresionListaNumeros(numerosGuardados,index);
+    
+    index++;
+   
+  }
+   
+}
+//---------funciones-----------------------
+int promedioDatos(int * listaNumeros,int index){
+ 
+  int promedio=0;
+  
+  for(int i=index-5;i<index;i++){
+    
+    promedio+=listaNumeros[i];
+    Serial.print(listaNumeros[i]);Serial.print("-");
+    
+  }
+  promedio/=5;
+  
+  Serial.println(promedio);
+  
+  return promedio;
+}
+String datoValido(int * listaNumero,int index){
+ 
+  String dato;
+  
+  dato=String(promedioDatos(listaNumero,index));
+  
+  return dato;
+ 
+}
+
+void impresionListaNumeros(int *lista,int index){
+  for(int i=0;i<index+1;i++){
+    Serial.print(lista[i]);
+ 	Serial.print(",");
+  }
+     Serial.println();
+}
+// pasa de binario a su correspondiente representacion de 
+// entero para un numero de dos digitos
+int threeDigits(String binary){
+  
+  String byte1,byte2,byte3;
+  
+  int dataNumber;
+  
+  for(int i=0;i<24;i++){
+  
+    if(i<8){
+    
+      byte1+=binary.charAt(i);
+    
+    }
+    else if(i>=8 && i<16){
+      byte2+=binary.charAt(i);
+    }
+    else{
+    
+      byte3+=binary.charAt(i);
+    
+    }
+ 
+  }
+  
+  dataNumber=byteToInt(byte1)*100;
+  dataNumber+=byteToInt(byte2)*10;
+  dataNumber+=byteToInt(byte3);
+  return dataNumber;
+  
+}
+// pasa de binario a su correspondiente representacion de 
+// entero para un numero de dos digitos
+int twoDigits(String binary){
+  
+  
+  String byte1,byte2;
+  
+  int dataNumber;
+  
+  for(int i=0;i<16;i++){
+  
+    if(i<8){
+    
+      byte1+=binary.charAt(i);
+    
+    }
+    else{
+    
+      byte2+=binary.charAt(i);
+    
+    }
+ 
+  }
+  
+  dataNumber=byteToInt(byte1)*10;
+  dataNumber+=byteToInt(byte2);
+  return dataNumber;
+}
+
+/*
+	funcion que separa la respresentacion binaria de 8 bits
+    de un numero, y despues usa funcion binaryToInt
+    para integrar el numero de un digito
+*/
+int byteToInt(String binary){
+  
+  String part1,part2;
+  
+  int decAscii=0;
+  
+  for(int i=0;i<8;i++){
+  
+    if(i<4){
+    
+      part1+=binary.charAt(i);
+    
+    }
+    else{
+    
+      part2+=binary.charAt(i);
+    
+    }
+  }
+
+  decAscii=binaryToInt(part1)*10;
+  decAscii+=binaryToInt(part2);
+  decAscii-=48;
+  return decAscii;
+}
+/*
+	funcion que convierte la respresentacion binaria de 4 bits
+    de un numero, a su numero entero correspondiente
+*/
+
+int binaryToInt(String binary){
+  
+  int asciiDec;
+  
+  if(binary.equals("0000")){
+    asciiDec=0;
+  }
+  else if(binary.equals("0001")){
+    asciiDec=1;
+  }
+  else if(binary.equals("0010")){
+    asciiDec=2;
+  }
+  else if(binary.equals("0011")){
+    asciiDec=3;
+  }
+  else if(binary.equals("0100")){
+    asciiDec=4;
+  }
+  else if(binary.equals("0101")){
+    asciiDec=5;
+  }
+  else if(binary.equals("0110")){
+    asciiDec=6;
+  }  	
+  else if(binary.equals("0111")){
+    asciiDec=7;
+  }
+  else if(binary.equals("1000")){
+    asciiDec=8;
+  }
+  else if(binary.equals("1001")){
+    asciiDec=9;
+  }
+
+  return asciiDec;
+}
