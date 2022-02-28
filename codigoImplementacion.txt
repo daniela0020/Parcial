@@ -120,10 +120,12 @@ String intToBinary(int n){
 
 //---------------------Arduino Receptor--------------------
 // C++ code
+// C++ code
+
 int relojInput= 10;
 int contador=0,contadorByte=0,index=0;
 String binarioTotal,binario,informacion;
-int numerosGuardados [100];
+int numerosGuardados[100];
 void setup()
 {
 
@@ -142,7 +144,7 @@ void loop()
   
   if(digitalRead(relojInput)==1){
  
-    delay(1200);//el delay causado por reloj integrado y rejol sincronizacion
+    delay(1210);//el delay causado por reloj integrado y rejol sincronizacion
         
      for(int i=2;i<=9;i++){//lectura 8 bits 74hc595
     
@@ -180,8 +182,6 @@ void loop()
     
     contadorByte=0;
     
-    impresionListaNumeros(numerosGuardados,index);
-    
     index++;
     
     
@@ -190,9 +190,13 @@ void loop()
 //cuando el numero es dos digitos
   else if(contadorByte==2){
     
-    if(twoDigits(binarioTotal)==73){//es clave?
+    int datoNumerico=twoDigits(binarioTotal);
+    
+    if(datoNumerico==73){//es clave?
       
-      informacion=datoValido(numerosGuardados,index);;
+      informacion=datoValido(numerosGuardados,index);
+      
+      Serial.print(informacion);Serial.print(" ");
       
       binarioTotal="";
 
@@ -201,13 +205,11 @@ void loop()
     }
     else{
     
-      numerosGuardados[index]= twoDigits(binarioTotal);
+      numerosGuardados[index]= datoNumerico;
 
       binarioTotal="";
 
       contadorByte=0;
-      
-      impresionListaNumeros(numerosGuardados,index);
 
       index++;
 
@@ -222,8 +224,6 @@ void loop()
     binarioTotal="";
     
     contadorByte=0;
-    
-    impresionListaNumeros(numerosGuardados,index);
     
     index++;
    
