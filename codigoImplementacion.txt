@@ -120,8 +120,6 @@ String intToBinary(int n){
 
 //---------------------Arduino Receptor--------------------
 // C++ code
-// C++ code
-
 int relojInput= 10;
 int contador=0,contadorByte=0,index=0;
 String binarioTotal,binario,informacion;
@@ -144,7 +142,7 @@ void loop()
   
   if(digitalRead(relojInput)==1){
  
-    delay(1210);//el delay causado por reloj integrado y rejol sincronizacion
+    delay(1206);//el delay causado por reloj integrado y rejol sincronizacion
         
      for(int i=2;i<=9;i++){//lectura 8 bits 74hc595
     
@@ -194,9 +192,11 @@ void loop()
     
     if(datoNumerico==73){//es clave?
       
-      informacion=datoValido(numerosGuardados,index);
+      informacion+=promedioDatos(numerosGuardados,index)+" ";
       
-      Serial.print(informacion);Serial.print(" ");
+      Serial.println("Lista de elementos recibidos: ");impresionListaNumeros(numerosGuardados,index);
+        
+      Serial.println("Lista de elementos validos: ");Serial.print(informacion);Serial.print(" ");
       
       binarioTotal="";
 
@@ -231,38 +231,25 @@ void loop()
    
 }
 //---------funciones-----------------------
-int promedioDatos(int * listaNumeros,int index){
+String promedioDatos(int * listaNumeros,int index){
  
   int promedio=0;
   
   for(int i=index-5;i<index;i++){
     
     promedio+=listaNumeros[i];
-    Serial.print(listaNumeros[i]);Serial.print("-");
     
   }
   promedio/=5;
   
-  Serial.println(promedio);
-  
-  return promedio;
-}
-String datoValido(int * listaNumero,int index){
- 
-  String dato;
-  
-  dato=String(promedioDatos(listaNumero,index));
-  
-  return dato;
- 
+  return String(promedio);
 }
 
 void impresionListaNumeros(int *lista,int index){
-  for(int i=0;i<index+1;i++){
+  for(int i=0;i<index;i++){
     Serial.print(lista[i]);
  	Serial.print(",");
   }
-     Serial.println();
 }
 // pasa de binario a su correspondiente representacion de 
 // entero para un numero de dos digitos
@@ -289,17 +276,17 @@ int threeDigits(String binary){
     }
  
   }
-  
-  dataNumber=byteToInt(byte1)*100;
-  dataNumber+=byteToInt(byte2)*10;
-  dataNumber+=byteToInt(byte3);
+  int digito1,digito2,digito3;
+  digito1=byteToInt(byte1)*100;
+  digito2=byteToInt(byte2)*10;
+  digito3=byteToInt(byte3);
+  dataNumber=digito1+digito2+digito3;
   return dataNumber;
   
 }
 // pasa de binario a su correspondiente representacion de 
 // entero para un numero de dos digitos
 int twoDigits(String binary){
-  
   
   String byte1,byte2;
   
@@ -319,9 +306,10 @@ int twoDigits(String binary){
     }
  
   }
-  
-  dataNumber=byteToInt(byte1)*10;
-  dataNumber+=byteToInt(byte2);
+  int digito1,digito2;
+  digito1=byteToInt(byte1)*10;
+  digito2=byteToInt(byte2);
+  dataNumber=digito1+digito2;
   return dataNumber;
 }
 
@@ -334,7 +322,7 @@ int byteToInt(String binary){
   
   String part1,part2;
   
-  int decAscii=0;
+  int dataNumber=0;
   
   for(int i=0;i<8;i++){
   
@@ -349,11 +337,10 @@ int byteToInt(String binary){
     
     }
   }
-
-  decAscii=binaryToInt(part1)*10;
-  decAscii+=binaryToInt(part2);
-  decAscii-=48;
-  return decAscii;
+  int digito1=binaryToInt(part1)*10;
+  int digito2=binaryToInt(part2);
+  dataNumber=digito1+digito2-48;
+  return dataNumber;
 }
 /*
 	funcion que convierte la respresentacion binaria de 4 bits
@@ -397,3 +384,4 @@ int binaryToInt(String binary){
 
   return asciiDec;
 }
+
